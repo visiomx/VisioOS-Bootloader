@@ -1,12 +1,13 @@
 /*
- * VOS-BOOT-ENGINE v2.0.2 (2026-07-05)
+ * VOS-BOOT-ENGINE v2.0.3 (2026-07-05)
  * Copyright (c) 2026 Visio US LLC. All rights reserved.
  * PROPRIETARY SOFTWARE - UNAUTHORIZED USE PROHIBITED.
  *
  * XCSAIOS/VisioOS boot display engine - three.js CRT edition.
- * v2.0.2: Fallout-terminal effect pass - per-glyph phosphor bloom, visible
- * drifting scan bands, rolling refresh bar, breathing flicker, green idle
- * glow floor. Flat glass (no curvature). Effects persist 60s post-animation.
+ * v2.0.3: RobCo field pass - the whole tube glows: green phosphor FIELD
+ * (center-bright, strong tube vignette) with text composited additively on
+ * top; scan bands at near-double contrast carving the full field; roll bar,
+ * flicker, per-glyph bloom retained. Flat glass. 60s post-animation persist.
  * Same terminal, same text, same pacing, same sounds as v1 - now drawn to a
  * canvas texture and rendered through a WebGL CRT shader (barrel curvature,
  * scanlines, vignette, phosphor flicker). Requires three.js r128 (loaded from
@@ -143,16 +144,16 @@
         'varying vec2 vUv;uniform sampler2D tDiffuse;uniform float time;',
         'void main(){',
         ' vec2 uv=vUv;',
-        ' vec3 col=texture2D(tDiffuse,uv).rgb;',
-        ' col+=texture2D(tDiffuse,uv+vec2(0.0007,0.0)).rgb*vec3(0.04,0.0,0.0);',
-        ' col+=texture2D(tDiffuse,uv-vec2(0.0007,0.0)).rgb*vec3(0.0,0.0,0.04);',
-        ' col=max(col,vec3(0.006,0.020,0.009));',
-        ' col*=0.82+0.18*sin(uv.y*' + (ch * 1.7).toFixed(1) + '+time*1.5);',
-        ' float roll=fract(uv.y-time*0.12);',
-        ' col*=1.0+0.10*exp(-pow((roll-0.5)*14.0,2.0));',
+        ' vec3 tex=texture2D(tDiffuse,uv).rgb;',
+        ' tex+=texture2D(tDiffuse,uv+vec2(0.0007,0.0)).rgb*vec3(0.04,0.0,0.0);',
+        ' tex+=texture2D(tDiffuse,uv-vec2(0.0007,0.0)).rgb*vec3(0.0,0.0,0.04);',
         ' float vig=16.0*uv.x*uv.y*(1.0-uv.x)*(1.0-uv.y);',
-        ' col*=pow(vig,0.10);',
-        ' col*=1.0+0.035*sin(time*11.0)+0.02*sin(time*47.0);',
+        ' vec3 field=vec3(0.09,0.30,0.12)*pow(vig,0.50);',
+        ' vec3 col=field+tex*(0.80+0.20*pow(vig,0.30));',
+        ' col*=0.68+0.32*sin(uv.y*' + (ch * 1.7).toFixed(1) + '+time*1.2);',
+        ' float roll=fract(uv.y-time*0.10);',
+        ' col*=1.0+0.09*exp(-pow((roll-0.5)*14.0,2.0));',
+        ' col*=1.0+0.030*sin(time*11.0)+0.015*sin(time*47.0);',
         ' gl_FragColor=vec4(col,1.0);',
         '}'].join('\n')
     });
