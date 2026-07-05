@@ -1,9 +1,12 @@
 /*
- * VOS-BOOT-ENGINE v2.0.5 (2026-07-05)
+ * VOS-BOOT-ENGINE v2.0.6 (2026-07-05)
  * Copyright (c) 2026 Visio US LLC. All rights reserved.
  * PROPRIETARY SOFTWARE - UNAUTHORIZED USE PROHIBITED.
  *
  * XCSAIOS/VisioOS boot display engine - three.js CRT edition.
+ * v2.0.6: split scanlines (0.42 field / 0.14 text - glow bridges the gaps,
+ * near-solid glyphs with faint striping), classic block cursor while typing,
+ * breathing cycle 5s -> 4s.
  * v2.0.5: thin-duty scanlines (glyphs keep ~80 percent of pixels), CRT bar
  * reshaped 3.5-lines-tall hard-bottom fade-up, saturation stage for vibrancy.
  * v2.0.4: roll bar fixed downward @10s sweep, 3x stronger and wider; field
@@ -153,14 +156,14 @@
         ' tex+=texture2D(tDiffuse,uv-vec2(0.0007,0.0)).rgb*vec3(0.0,0.0,0.04);',
         ' float vig=16.0*uv.x*uv.y*(1.0-uv.x)*(1.0-uv.y);',
         ' vec3 field=vec3(0.05,0.17,0.07)*pow(vig,0.50);',
-        ' vec3 col=field+tex*(1.05+0.20*pow(vig,0.30));',
         ' float s=0.5+0.5*sin(uv.y*' + (ch * 1.7).toFixed(1) + '+time*1.2);',
-        ' col*=1.0-0.38*pow(s,5.0);',
+        ' float lf=pow(s,5.0);',
+        ' vec3 col=field*(1.0-0.42*lf)+tex*(1.05+0.20*pow(vig,0.30))*(1.0-0.14*lf);',
         ' float rel=fract(uv.y+time*0.10);',
         ' col*=1.0+0.30*smoothstep(0.065,0.0,rel);',
         ' vec3 lum=vec3(dot(col,vec3(0.299,0.587,0.114)));',
         ' col=mix(lum,col,1.35);',
-        ' col*=1.0+0.10*sin(time*1.257)+0.008*sin(time*9.0);',
+        ' col*=1.0+0.10*sin(time*1.571)+0.008*sin(time*9.0);',
         ' gl_FragColor=vec4(col,1.0);',
         '}'].join('\n')
     });
@@ -253,13 +256,15 @@
         if (l.h) { drawSkynet(y, now); }
         else if (l.t !== '') {
           var txt = (k < idx) ? l.t : l.t.slice(0, ci);
-          if (txt) {
-            ctx.shadowBlur = (l.g ? 12 : 5) * SC;
-            ctx.shadowColor = l.c || '#00ff41';
-            ctx.fillStyle = l.c || '#00ff41';
-            ctx.fillText(txt, PADL * SC, y);
-            ctx.shadowBlur = 0;
+          ctx.shadowBlur = (l.g ? 12 : 5) * SC;
+          ctx.shadowColor = l.c || '#00ff41';
+          ctx.fillStyle = l.c || '#00ff41';
+          if (txt) ctx.fillText(txt, PADL * SC, y);
+          if (k === idx && !done) {
+            var cwid = ctx.measureText(txt).width;
+            ctx.fillRect(PADL * SC + cwid + 2, y, ctx.measureText('M').width, FS * SC * 1.05);
           }
+          ctx.shadowBlur = 0;
         }
         y += LH * SC;
       }
