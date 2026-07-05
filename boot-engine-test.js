@@ -1,9 +1,11 @@
 /*
- * VOS-BOOT-ENGINE v2.0.4 (2026-07-05)
+ * VOS-BOOT-ENGINE v2.0.5 (2026-07-05)
  * Copyright (c) 2026 Visio US LLC. All rights reserved.
  * PROPRIETARY SOFTWARE - UNAUTHORIZED USE PROHIBITED.
  *
  * XCSAIOS/VisioOS boot display engine - three.js CRT edition.
+ * v2.0.5: thin-duty scanlines (glyphs keep ~80 percent of pixels), CRT bar
+ * reshaped 3.5-lines-tall hard-bottom fade-up, saturation stage for vibrancy.
  * v2.0.4: roll bar fixed downward @10s sweep, 3x stronger and wider; field
  * darkened; breathing slowed to 5s damaged-tube cycle; text +40 percent.
  * v2.0.3: RobCo field pass - the whole tube glows: green phosphor FIELD
@@ -151,10 +153,13 @@
         ' tex+=texture2D(tDiffuse,uv-vec2(0.0007,0.0)).rgb*vec3(0.0,0.0,0.04);',
         ' float vig=16.0*uv.x*uv.y*(1.0-uv.x)*(1.0-uv.y);',
         ' vec3 field=vec3(0.05,0.17,0.07)*pow(vig,0.50);',
-        ' vec3 col=field+tex*(1.15+0.25*pow(vig,0.30));',
-        ' col*=0.68+0.32*sin(uv.y*' + (ch * 1.7).toFixed(1) + '+time*1.2);',
-        ' float roll=fract(uv.y+time*0.10);',
-        ' col*=1.0+0.30*exp(-pow((roll-0.5)*8.0,2.0));',
+        ' vec3 col=field+tex*(1.05+0.20*pow(vig,0.30));',
+        ' float s=0.5+0.5*sin(uv.y*' + (ch * 1.7).toFixed(1) + '+time*1.2);',
+        ' col*=1.0-0.38*pow(s,5.0);',
+        ' float rel=fract(uv.y+time*0.10);',
+        ' col*=1.0+0.30*smoothstep(0.065,0.0,rel);',
+        ' vec3 lum=vec3(dot(col,vec3(0.299,0.587,0.114)));',
+        ' col=mix(lum,col,1.35);',
         ' col*=1.0+0.10*sin(time*1.257)+0.008*sin(time*9.0);',
         ' gl_FragColor=vec4(col,1.0);',
         '}'].join('\n')
