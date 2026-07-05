@@ -1,9 +1,11 @@
 /*
- * VOS-BOOT-ENGINE v2.0.6 (2026-07-05)
+ * VOS-BOOT-ENGINE v2.0.7 (2026-07-05)
  * Copyright (c) 2026 Visio US LLC. All rights reserved.
  * PROPRIETARY SOFTWARE - UNAUTHORIZED USE PROHIBITED.
  *
  * XCSAIOS/VisioOS boot display engine - three.js CRT edition.
+ * v2.0.7: scanlines pixel-locked static (integer 3px period, floor-based -
+ * no drift term, no sub-pixel moire doubling).
  * v2.0.6: split scanlines (0.42 field / 0.14 text - glow bridges the gaps,
  * near-solid glyphs with faint striping), classic block cursor while typing,
  * breathing cycle 5s -> 4s.
@@ -156,8 +158,8 @@
         ' tex+=texture2D(tDiffuse,uv-vec2(0.0007,0.0)).rgb*vec3(0.0,0.0,0.04);',
         ' float vig=16.0*uv.x*uv.y*(1.0-uv.x)*(1.0-uv.y);',
         ' vec3 field=vec3(0.05,0.17,0.07)*pow(vig,0.50);',
-        ' float s=0.5+0.5*sin(uv.y*' + (ch * 1.7).toFixed(1) + '+time*1.2);',
-        ' float lf=pow(s,5.0);',
+        ' float py=floor(uv.y*' + CH.toFixed(1) + ');',
+        ' float lf=(mod(py,3.0)<1.0)?1.0:0.0;',
         ' vec3 col=field*(1.0-0.42*lf)+tex*(1.05+0.20*pow(vig,0.30))*(1.0-0.14*lf);',
         ' float rel=fract(uv.y+time*0.10);',
         ' col*=1.0+0.30*smoothstep(0.065,0.0,rel);',
