@@ -1,11 +1,12 @@
 /*
- * VOS-BOOT-ENGINE v2.0.1 (2026-07-05)
+ * VOS-BOOT-ENGINE v2.0.2 (2026-07-05)
  * Copyright (c) 2026 Visio US LLC. All rights reserved.
  * PROPRIETARY SOFTWARE - UNAUTHORIZED USE PROHIBITED.
  *
  * XCSAIOS/VisioOS boot display engine - three.js CRT edition.
- * v2.0.1: barrel curvature removed (readability), vignette softened, fringe
- * halved, effect loop persists 60s after animation completes.
+ * v2.0.2: Fallout-terminal effect pass - per-glyph phosphor bloom, visible
+ * drifting scan bands, rolling refresh bar, breathing flicker, green idle
+ * glow floor. Flat glass (no curvature). Effects persist 60s post-animation.
  * Same terminal, same text, same pacing, same sounds as v1 - now drawn to a
  * canvas texture and rendered through a WebGL CRT shader (barrel curvature,
  * scanlines, vignette, phosphor flicker). Requires three.js r128 (loaded from
@@ -143,12 +144,15 @@
         'void main(){',
         ' vec2 uv=vUv;',
         ' vec3 col=texture2D(tDiffuse,uv).rgb;',
-        ' col+=texture2D(tDiffuse,uv+vec2(0.0007,0.0)).rgb*vec3(0.03,0.0,0.0);',
-        ' col+=texture2D(tDiffuse,uv-vec2(0.0007,0.0)).rgb*vec3(0.0,0.0,0.03);',
-        ' col*=1.0-0.07*sin(uv.y*' + (ch * 1.7).toFixed(1) + ');',
+        ' col+=texture2D(tDiffuse,uv+vec2(0.0007,0.0)).rgb*vec3(0.04,0.0,0.0);',
+        ' col+=texture2D(tDiffuse,uv-vec2(0.0007,0.0)).rgb*vec3(0.0,0.0,0.04);',
+        ' col=max(col,vec3(0.006,0.020,0.009));',
+        ' col*=0.82+0.18*sin(uv.y*' + (ch * 1.7).toFixed(1) + '+time*1.5);',
+        ' float roll=fract(uv.y-time*0.12);',
+        ' col*=1.0+0.10*exp(-pow((roll-0.5)*14.0,2.0));',
         ' float vig=16.0*uv.x*uv.y*(1.0-uv.x)*(1.0-uv.y);',
-        ' col*=pow(vig,0.05);',
-        ' col*=1.0+0.014*sin(time*11.0)+0.006*sin(time*53.0);',
+        ' col*=pow(vig,0.10);',
+        ' col*=1.0+0.035*sin(time*11.0)+0.02*sin(time*47.0);',
         ' gl_FragColor=vec4(col,1.0);',
         '}'].join('\n')
     });
@@ -242,7 +246,8 @@
         else if (l.t !== '') {
           var txt = (k < idx) ? l.t : l.t.slice(0, ci);
           if (txt) {
-            if (l.g) { ctx.shadowBlur = 12 * SC; ctx.shadowColor = '#00ff41'; }
+            ctx.shadowBlur = (l.g ? 12 : 5) * SC;
+            ctx.shadowColor = l.c || '#00ff41';
             ctx.fillStyle = l.c || '#00ff41';
             ctx.fillText(txt, PADL * SC, y);
             ctx.shadowBlur = 0;
