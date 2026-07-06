@@ -1,9 +1,13 @@
 /*
- * VOS-BOOT-ENGINE v2.0.8 (2026-07-05)
+ * VOS-BOOT-ENGINE v2.0.9 (2026-07-05)
  * Copyright (c) 2026 Visio US LLC. All rights reserved.
  * PROPRIETARY SOFTWARE - UNAUTHORIZED USE PROHIBITED.
  *
  * XCSAIOS/VisioOS boot display engine - three.js CRT edition.
+ * v2.0.9: glow dial pass - 'Established' tightened + stacked (16/8/8/4 hot
+ * strikes: wide 24/12 diluted to sub-quantum alpha in the dim tube top),
+ * Cyberdyne halo softened to single 12 fill + round-join glow stroke so
+ * corners carry glow evenly. 'All systems nominal.' untouched (blessed).
  * v2.0.8: extra-glow pass - triple-strike bloom on 'All systems nominal.'
  * and SKYNET 'Established' (v1 layered text-shadow intensity), red halo
  * underlay behind the Cyberdyne logo; banner brand XCSAIOS -> VisioOS.
@@ -223,10 +227,11 @@
       var dw = ctx.measureText(dots + ' ').width;
       ctx.fillStyle = statColor;
       if (glow) {
-        ctx.shadowColor = '#ff0000';
-        ctx.shadowBlur = 24 * SC; ctx.fillText(stat, x + lab + dw, y);
-        ctx.shadowBlur = 12 * SC; ctx.fillText(stat, x + lab + dw, y);
-        ctx.shadowBlur = 5 * SC;
+        ctx.shadowColor = '#ff1111';
+        ctx.shadowBlur = 16 * SC; ctx.fillText(stat, x + lab + dw, y);
+        ctx.shadowBlur = 8 * SC; ctx.fillText(stat, x + lab + dw, y);
+        ctx.shadowBlur = 8 * SC; ctx.fillText(stat, x + lab + dw, y);
+        ctx.shadowBlur = 4 * SC;
       }
       ctx.fillText(stat, x + lab + dw, y);
       ctx.shadowBlur = 0;
@@ -240,8 +245,10 @@
         ctx.lineTo(lx + lw * 0.9875, ly + lhh * 0.975);
         ctx.lineTo(lx + lw * 0.0125, ly + lhh * 0.975);
         ctx.closePath();
-        ctx.shadowColor = '#ff2222'; ctx.shadowBlur = 22 * SC;
-        ctx.fillStyle = '#cc1111'; ctx.fill(); ctx.fill();
+        ctx.shadowColor = '#ff2222'; ctx.shadowBlur = 12 * SC;
+        ctx.fillStyle = '#cc1111'; ctx.fill();
+        ctx.lineJoin = 'round'; ctx.lineWidth = 2.5 * SC;
+        ctx.strokeStyle = '#cc1111'; ctx.shadowBlur = 8 * SC; ctx.stroke();
         ctx.shadowBlur = 0;
         ctx.clip();
         ctx.fillStyle = '#330000'; ctx.fillRect(lx, ly, lw, lhh);
