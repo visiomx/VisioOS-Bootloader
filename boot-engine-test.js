@@ -1,9 +1,12 @@
 /*
- * VOS-BOOT-ENGINE v2.0.9 (2026-07-05)
+ * VOS-BOOT-ENGINE v2.0.10 (2026-07-05)
  * Copyright (c) 2026 Visio US LLC. All rights reserved.
  * PROPRIETARY SOFTWARE - UNAUTHORIZED USE PROHIBITED.
  *
  * XCSAIOS/VisioOS boot display engine - three.js CRT edition.
+ * v2.0.10: Cyberdyne logo raised 11*SC (ly offset +6 -> -5; DOM fallback
+ * bottom -6px -> 5px) - logo center now sits midway between the two == bars
+ * (the halo blur made it read low).
  * v2.0.9: glow dial pass - 'Established' tightened + stacked (16/8/8/4 hot
  * strikes: wide 24/12 diluted to sub-quantum alpha in the dim tube top),
  * Cyberdyne halo softened to single 12 fill + round-join glow stroke so
@@ -237,7 +240,7 @@
       ctx.shadowBlur = 0;
       var vis = skyEstablished ? 1 : Math.min(1, Math.max(0, (now - skyStart - 150) / 400));
       if (vis > 0) {
-        var lx = x + 370 * SC, lw = 90 * SC, lhh = 45 * SC, ly = y - lhh + fpx + 6 * SC;
+        var lx = x + 370 * SC, lw = 90 * SC, lhh = 45 * SC, ly = y - lhh + fpx - 5 * SC;
         ctx.save();
         ctx.globalAlpha = vis;
         ctx.beginPath();
@@ -336,7 +339,7 @@
     function makeSkynetConnecting() {
       var w = document.createElement('span');
       w.style.cssText = 'position:relative;color:#666;';
-      w.innerHTML = '   SKYNET UPLINK: <span id="skdots" style="color:#ffaa00;">.     </span> <span id="skst" style="color:#ffaa00;">connecting</span><span id="sklogo" style="position:absolute;left:370px;bottom:-6px;opacity:0;">' + skysvg + '</span>';
+      w.innerHTML = '   SKYNET UPLINK: <span id="skdots" style="color:#ffaa00;">.     </span> <span id="skst" style="color:#ffaa00;">connecting</span><span id="sklogo" style="position:absolute;left:370px;bottom:5px;opacity:0;">' + skysvg + '</span>';
       return w;
     }
     function upgradeToEstablished() {
