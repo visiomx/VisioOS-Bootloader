@@ -1,9 +1,12 @@
 /*
- * VOS-BOOT-ENGINE v2.0.7 (2026-07-05)
+ * VOS-BOOT-ENGINE v2.0.8 (2026-07-05)
  * Copyright (c) 2026 Visio US LLC. All rights reserved.
  * PROPRIETARY SOFTWARE - UNAUTHORIZED USE PROHIBITED.
  *
  * XCSAIOS/VisioOS boot display engine - three.js CRT edition.
+ * v2.0.8: extra-glow pass - triple-strike bloom on 'All systems nominal.'
+ * and SKYNET 'Established' (v1 layered text-shadow intensity), red halo
+ * underlay behind the Cyberdyne logo; banner brand XCSAIOS -> VisioOS.
  * v2.0.7: scanlines pixel-locked static (integer 3px period, floor-based -
  * no drift term, no sub-pixel moire doubling).
  * v2.0.6: split scanlines (0.42 field / 0.14 text - glow bridges the gaps,
@@ -60,7 +63,7 @@
 
   var L = [
     { t: BAR, c: '#00ff41', s: 2 },
-    { t: '   XCSAIOS  -  XCS AI OPERATING SYSTEM', c: '#00ff41', s: 6 },
+    { t: '   VisioOS  -  XCS AI OPERATING SYSTEM', c: '#00ff41', s: 6 },
     { t: '   BUILD ' + D.osver + ' | ' + D.date, c: '#1a6632', s: 6 },
     { t: 'SKYNET', h: true },
     { t: BAR, c: '#00ff41', s: 2 },
@@ -218,8 +221,13 @@
       ctx.fillStyle = skyEstablished ? '#666666' : '#ffaa00';
       ctx.fillText(dots, x + lab, y);
       var dw = ctx.measureText(dots + ' ').width;
-      if (glow) { ctx.shadowBlur = 10 * SC; ctx.shadowColor = '#ff0000'; }
       ctx.fillStyle = statColor;
+      if (glow) {
+        ctx.shadowColor = '#ff0000';
+        ctx.shadowBlur = 24 * SC; ctx.fillText(stat, x + lab + dw, y);
+        ctx.shadowBlur = 12 * SC; ctx.fillText(stat, x + lab + dw, y);
+        ctx.shadowBlur = 5 * SC;
+      }
       ctx.fillText(stat, x + lab + dw, y);
       ctx.shadowBlur = 0;
       var vis = skyEstablished ? 1 : Math.min(1, Math.max(0, (now - skyStart - 150) / 400));
@@ -232,6 +240,9 @@
         ctx.lineTo(lx + lw * 0.9875, ly + lhh * 0.975);
         ctx.lineTo(lx + lw * 0.0125, ly + lhh * 0.975);
         ctx.closePath();
+        ctx.shadowColor = '#ff2222'; ctx.shadowBlur = 22 * SC;
+        ctx.fillStyle = '#cc1111'; ctx.fill(); ctx.fill();
+        ctx.shadowBlur = 0;
         ctx.clip();
         ctx.fillStyle = '#330000'; ctx.fillRect(lx, ly, lw, lhh);
         ctx.fillStyle = '#cc1111'; ctx.globalAlpha = vis * 0.85;
@@ -258,10 +269,14 @@
         if (l.h) { drawSkynet(y, now); }
         else if (l.t !== '') {
           var txt = (k < idx) ? l.t : l.t.slice(0, ci);
-          ctx.shadowBlur = (l.g ? 12 : 5) * SC;
           ctx.shadowColor = l.c || '#00ff41';
           ctx.fillStyle = l.c || '#00ff41';
+          ctx.shadowBlur = (l.g ? 26 : 5) * SC;
           if (txt) ctx.fillText(txt, PADL * SC, y);
+          if (txt && l.g) {
+            ctx.shadowBlur = 12 * SC; ctx.fillText(txt, PADL * SC, y);
+            ctx.shadowBlur = 6 * SC; ctx.fillText(txt, PADL * SC, y);
+          }
           if (k === idx && !done) {
             var cwid = ctx.measureText(txt).width;
             ctx.fillRect(PADL * SC + cwid + 2, y, ctx.measureText('M').width, FS * SC * 1.05);
