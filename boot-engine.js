@@ -1,9 +1,32 @@
 /*
- * VOS-BOOT-ENGINE v2.0.0 (2026-07-05)
+ * VOS-BOOT-ENGINE v2.0.10 (2026-07-05)
  * Copyright (c) 2026 Visio US LLC. All rights reserved.
  * PROPRIETARY SOFTWARE - UNAUTHORIZED USE PROHIBITED.
  *
  * XCSAIOS/VisioOS boot display engine - three.js CRT edition.
+ * v2.0.10: Cyberdyne logo raised 11*SC (ly offset +6 -> -5; DOM fallback
+ * bottom -6px -> 5px) - logo center now sits midway between the two == bars
+ * (the halo blur made it read low).
+ * v2.0.9: glow dial pass - 'Established' tightened + stacked (16/8/8/4 hot
+ * strikes: wide 24/12 diluted to sub-quantum alpha in the dim tube top),
+ * Cyberdyne halo softened to single 12 fill + round-join glow stroke so
+ * corners carry glow evenly. 'All systems nominal.' untouched (blessed).
+ * v2.0.8: extra-glow pass - triple-strike bloom on 'All systems nominal.'
+ * and SKYNET 'Established' (v1 layered text-shadow intensity), red halo
+ * underlay behind the Cyberdyne logo; banner brand XCSAIOS -> VisioOS.
+ * v2.0.7: scanlines pixel-locked static (integer 3px period, floor-based -
+ * no drift term, no sub-pixel moire doubling).
+ * v2.0.6: split scanlines (0.42 field / 0.14 text - glow bridges the gaps,
+ * near-solid glyphs with faint striping), classic block cursor while typing,
+ * breathing cycle 5s -> 4s.
+ * v2.0.5: thin-duty scanlines (glyphs keep ~80 percent of pixels), CRT bar
+ * reshaped 3.5-lines-tall hard-bottom fade-up, saturation stage for vibrancy.
+ * v2.0.4: roll bar fixed downward @10s sweep, 3x stronger and wider; field
+ * darkened; breathing slowed to 5s damaged-tube cycle; text +40 percent.
+ * v2.0.3: RobCo field pass - the whole tube glows: green phosphor FIELD
+ * (center-bright, strong tube vignette) with text composited additively on
+ * top; scan bands at near-double contrast carving the full field; roll bar,
+ * flicker, per-glyph bloom retained. Flat glass. 60s post-animation persist.
  * Same terminal, same text, same pacing, same sounds as v1 - now drawn to a
  * canvas texture and rendered through a WebGL CRT shader (barrel curvature,
  * scanlines, vignette, phosphor flicker). Requires three.js r128 (loaded from
@@ -47,7 +70,7 @@
 
   var L = [
     { t: BAR, c: '#00ff41', s: 2 },
-    { t: '   XCSAIOS  -  XCS AI OPERATING SYSTEM', c: '#00ff41', s: 6 },
+    { t: '   VisioOS  -  XCS AI OPERATING SYSTEM', c: '#00ff41', s: 6 },
     { t: '   BUILD ' + D.osver + ' | ' + D.date, c: '#1a6632', s: 6 },
     { t: 'SKYNET', h: true },
     { t: BAR, c: '#00ff41', s: 2 },
@@ -138,17 +161,21 @@
       vertexShader: 'varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.0,1.0);}',
       fragmentShader: [
         'varying vec2 vUv;uniform sampler2D tDiffuse;uniform float time;',
-        'vec2 curve(vec2 uv){uv=uv*2.0-1.0;vec2 o=uv.yx*uv.yx*0.045;uv+=uv*o;return uv*0.5+0.5;}',
         'void main(){',
-        ' vec2 uv=curve(vUv);',
-        ' if(uv.x<0.0||uv.x>1.0||uv.y<0.0||uv.y>1.0){gl_FragColor=vec4(0.0);return;}',
-        ' vec3 col=texture2D(tDiffuse,uv).rgb;',
-        ' col+=texture2D(tDiffuse,uv+vec2(0.0011,0.0)).rgb*vec3(0.05,0.0,0.0);',
-        ' col+=texture2D(tDiffuse,uv-vec2(0.0011,0.0)).rgb*vec3(0.0,0.0,0.05);',
-        ' col*=1.0-0.07*sin(uv.y*' + (ch * 1.7).toFixed(1) + ');',
+        ' vec2 uv=vUv;',
+        ' vec3 tex=texture2D(tDiffuse,uv).rgb;',
+        ' tex+=texture2D(tDiffuse,uv+vec2(0.0007,0.0)).rgb*vec3(0.04,0.0,0.0);',
+        ' tex+=texture2D(tDiffuse,uv-vec2(0.0007,0.0)).rgb*vec3(0.0,0.0,0.04);',
         ' float vig=16.0*uv.x*uv.y*(1.0-uv.x)*(1.0-uv.y);',
-        ' col*=pow(vig,0.15);',
-        ' col*=1.0+0.014*sin(time*11.0)+0.006*sin(time*53.0);',
+        ' vec3 field=vec3(0.05,0.17,0.07)*pow(vig,0.50);',
+        ' float py=floor(uv.y*' + CH.toFixed(1) + ');',
+        ' float lf=(mod(py,3.0)<1.0)?1.0:0.0;',
+        ' vec3 col=field*(1.0-0.42*lf)+tex*(1.05+0.20*pow(vig,0.30))*(1.0-0.14*lf);',
+        ' float rel=fract(uv.y+time*0.10);',
+        ' col*=1.0+0.30*smoothstep(0.065,0.0,rel);',
+        ' vec3 lum=vec3(dot(col,vec3(0.299,0.587,0.114)));',
+        ' col=mix(lum,col,1.35);',
+        ' col*=1.0+0.10*sin(time*1.571)+0.008*sin(time*9.0);',
         ' gl_FragColor=vec4(col,1.0);',
         '}'].join('\n')
     });
@@ -160,7 +187,7 @@
 
     function stepState(now) {
       if (done || idx >= L.length) {
-        if (!done) { done = true; endAt = now + 5000; }
+        if (!done) { done = true; endAt = now + 60000; }
         return;
       }
       var l = L[idx];
@@ -201,13 +228,19 @@
       ctx.fillStyle = skyEstablished ? '#666666' : '#ffaa00';
       ctx.fillText(dots, x + lab, y);
       var dw = ctx.measureText(dots + ' ').width;
-      if (glow) { ctx.shadowBlur = 10 * SC; ctx.shadowColor = '#ff0000'; }
       ctx.fillStyle = statColor;
+      if (glow) {
+        ctx.shadowColor = '#ff1111';
+        ctx.shadowBlur = 16 * SC; ctx.fillText(stat, x + lab + dw, y);
+        ctx.shadowBlur = 8 * SC; ctx.fillText(stat, x + lab + dw, y);
+        ctx.shadowBlur = 8 * SC; ctx.fillText(stat, x + lab + dw, y);
+        ctx.shadowBlur = 4 * SC;
+      }
       ctx.fillText(stat, x + lab + dw, y);
       ctx.shadowBlur = 0;
       var vis = skyEstablished ? 1 : Math.min(1, Math.max(0, (now - skyStart - 150) / 400));
       if (vis > 0) {
-        var lx = x + 370 * SC, lw = 90 * SC, lhh = 45 * SC, ly = y - lhh + fpx + 6 * SC;
+        var lx = x + 370 * SC, lw = 90 * SC, lhh = 45 * SC, ly = y - lhh + fpx - 5 * SC;
         ctx.save();
         ctx.globalAlpha = vis;
         ctx.beginPath();
@@ -215,6 +248,11 @@
         ctx.lineTo(lx + lw * 0.9875, ly + lhh * 0.975);
         ctx.lineTo(lx + lw * 0.0125, ly + lhh * 0.975);
         ctx.closePath();
+        ctx.shadowColor = '#ff2222'; ctx.shadowBlur = 12 * SC;
+        ctx.fillStyle = '#cc1111'; ctx.fill();
+        ctx.lineJoin = 'round'; ctx.lineWidth = 2.5 * SC;
+        ctx.strokeStyle = '#cc1111'; ctx.shadowBlur = 8 * SC; ctx.stroke();
+        ctx.shadowBlur = 0;
         ctx.clip();
         ctx.fillStyle = '#330000'; ctx.fillRect(lx, ly, lw, lhh);
         ctx.fillStyle = '#cc1111'; ctx.globalAlpha = vis * 0.85;
@@ -241,12 +279,19 @@
         if (l.h) { drawSkynet(y, now); }
         else if (l.t !== '') {
           var txt = (k < idx) ? l.t : l.t.slice(0, ci);
-          if (txt) {
-            if (l.g) { ctx.shadowBlur = 12 * SC; ctx.shadowColor = '#00ff41'; }
-            ctx.fillStyle = l.c || '#00ff41';
-            ctx.fillText(txt, PADL * SC, y);
-            ctx.shadowBlur = 0;
+          ctx.shadowColor = l.c || '#00ff41';
+          ctx.fillStyle = l.c || '#00ff41';
+          ctx.shadowBlur = (l.g ? 26 : 5) * SC;
+          if (txt) ctx.fillText(txt, PADL * SC, y);
+          if (txt && l.g) {
+            ctx.shadowBlur = 12 * SC; ctx.fillText(txt, PADL * SC, y);
+            ctx.shadowBlur = 6 * SC; ctx.fillText(txt, PADL * SC, y);
           }
+          if (k === idx && !done) {
+            var cwid = ctx.measureText(txt).width;
+            ctx.fillRect(PADL * SC + cwid + 2, y, ctx.measureText('M').width, FS * SC * 1.05);
+          }
+          ctx.shadowBlur = 0;
         }
         y += LH * SC;
       }
@@ -294,7 +339,7 @@
     function makeSkynetConnecting() {
       var w = document.createElement('span');
       w.style.cssText = 'position:relative;color:#666;';
-      w.innerHTML = '   SKYNET UPLINK: <span id="skdots" style="color:#ffaa00;">.     </span> <span id="skst" style="color:#ffaa00;">connecting</span><span id="sklogo" style="position:absolute;left:370px;bottom:-6px;opacity:0;">' + skysvg + '</span>';
+      w.innerHTML = '   SKYNET UPLINK: <span id="skdots" style="color:#ffaa00;">.     </span> <span id="skst" style="color:#ffaa00;">connecting</span><span id="sklogo" style="position:absolute;left:370px;bottom:5px;opacity:0;">' + skysvg + '</span>';
       return w;
     }
     function upgradeToEstablished() {
